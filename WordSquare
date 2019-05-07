@@ -1,0 +1,209 @@
+package google;
+import java.util.*;
+public class H425_WordSquares {
+
+	public static void main ( String args[] ) {
+//		String[] words = { "area", "lead", "wall", "lady", "ball" };
+		String[] words = { "abat", "baba", "atan", "atal" };
+		
+		H425_WordSquares ob = new H425_WordSquares();
+		System.out.println( ob.wordSquares1(words) );
+		Solution obj = new Solution();
+		System.out.println(   obj.wordSquares(words) );
+	}
+	
+	// TLE
+	public List<List<String>> wordSquares(String[] words) {
+        List<List<String>> ans = new ArrayList<>();
+        dfs( ans, new ArrayList<>(), words, new boolean[ words.length ] );
+        return ans;
+    }
+    
+    public void dfs( List<List<String>> ans, List<String> tmp, String[] words, boolean[] seen ) {
+        
+        if ( tmp.size() > 0 && tmp.size() == tmp.get( 0 ).length() ) {
+            ans.add( new ArrayList<>( tmp ) );
+            return;
+        }
+        
+        
+        for ( int k = 0; k < words.length; k++ ) {
+        	tmp.add( words[k] );
+            boolean boo = true;
+            if ( tmp.size() != 1 ) {
+               	for ( int i = 0; i < tmp.size(); i++ ) {
+               		for ( int j = 0; j <= i; j++ ) {
+               			if ( tmp.get( i ).charAt( j ) != tmp.get( j ).charAt( i ) ) {
+               				boo = false;
+               				break;
+               			}
+               		}
+               		if ( !boo ) break;
+               	}
+            }
+                
+            if ( !boo ) {
+            	tmp.remove( tmp.size() - 1 );
+            	seen[k] = false;
+            } else {
+            	dfs( ans, tmp, words, seen );
+            	tmp.remove( tmp.size() - 1 );   
+            	seen[k] = false;
+            }
+        }
+    }
+    
+    
+    // extremely fast
+    // 14ms, beat 97.57%
+    static class TrieNode {
+    	String word;
+    	TrieNode[] children = new TrieNode[26];
+    }
+    static TrieNode root = new TrieNode();
+    static List<List<String>> squares;
+    
+    public List<List<String>> wordSquares1(String[] words) {
+    	for ( String w : words )
+    		buildTrie( w );
+    	int len = words[0].length();
+    	TrieNode[] nodes = new TrieNode[len]; // len can only be that
+    	
+    	for ( int i = 0; i < len; i++ )
+    		nodes[i] = root;
+    	
+    	squares = new ArrayList<>();
+    	dfs( 0, 0, nodes );
+    	return squares;
+    }
+    private static void buildTrie( String s ) {
+    	TrieNode node = root;
+    	for ( char c : s.toCharArray() ) {
+    		if ( node.children[c - 'a'] == null )
+    			node.children[c - 'a'] = new TrieNode();
+    		node = node.children[c - 'a'];
+    	}
+    	node.word = s;
+    }
+    private void dfs( int r, int c, TrieNode[] nodes ) {
+    	if ( r == nodes.length && c == nodes.length ) {
+    		List<String> tmp = new ArrayList<>();
+    		for ( TrieNode cur : nodes )
+    			tmp.add( cur.word );
+    		
+    		squares.add( tmp );
+    		return;
+    	}
+    	
+    	if ( c == nodes.length ) {
+    		dfs( r + 1, r + 1, nodes );
+    	} else { // foward into next node 
+    		TrieNode tmpR = nodes[ r ];
+    		TrieNode tmpC = nodes[ c ];
+    		if ( tmpR == null || tmpC == null )
+    			return;
+    		
+    		for ( int i = 0; i < 26; i++ ) {
+    			if ( nodes[r].children[i] != null && nodes[c].children[i] != null ) {
+    				nodes[r] = nodes[r].children[i];
+    				if ( r != c ) // 0,0; 1,1; 2,2; 3,3 itself
+    					nodes[c] = nodes[c].children[i];
+    				// if r == c stay same 
+    				
+    				dfs( r, c + 1, nodes );
+    				
+    				nodes[r] = tmpR;
+    				nodes[c] = tmpC;
+    			}
+    		}
+    	}
+    }
+    
+    
+    static class Solution {
+        
+        class TrieNode {
+            String word;
+            TrieNode[] children = new TrieNode[26];
+        }
+        TrieNode root = new TrieNode();
+        List<List<String>> ans;
+        public List<List<String>> wordSquares(String[] words) {
+            for ( String w : words )
+                buildTrie( w );
+            
+            int len = words[0].length();
+            TrieNode[] nodes = new TrieNode[ len ];
+            for ( int i = 0; i < len; i++ )
+                nodes[ i ] = root;
+            
+            ans = new ArrayList<>();
+            dfs( 0, 0, nodes );
+            return ans;
+        }
+        private void dfs( int r, int c, TrieNode[] nodes ) {
+            if ( r == nodes.length && c == nodes.length ) {
+                List<String> tmp = new ArrayList<>();
+                for ( TrieNode next : nodes )
+                    tmp.add( next.word );
+                ans.add( tmp );
+                return;
+            }
+            
+            if ( c == nodes.length ) {
+//                dfs( r + 1, c + 1, nodes );
+            	dfs( r + 1, r + 1, nodes );
+              	
+            } else {
+                TrieNode tmpR = nodes[ r ];
+                TrieNode tmpC = nodes[ c ];
+                
+                if ( tmpR == null || tmpC == null )
+                    return;
+                
+                for ( int i = 0; i < 26; i++ ) {
+                    if( nodes[r].children[i] != null && nodes[c].children[i] != null ) {
+                        nodes[r] = nodes[r].children[i];
+                        if ( r != c )
+                            nodes[c] = nodes[c].children[i];
+                        dfs( r, c + 1, nodes );
+                        nodes[r] = tmpR;
+                        nodes[c] = tmpC;
+                    }
+                }
+            }
+            
+        }
+        
+        
+        private void buildTrie( String s ) {
+            TrieNode node = root;
+            for ( char c : s.toCharArray() )  {
+                if ( node.children[c - 'a'] == null)
+                    node.children[c - 'a'] = new TrieNode();
+                node = node.children[c - 'a'];
+            }
+            node.word = s;
+        }
+        
+        
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
